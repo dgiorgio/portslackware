@@ -1,0 +1,44 @@
+#!/bin/bash
+
+VERSION=$1
+PRGNAM=portslackware
+SOURCE=.
+PRGNAM_PKG=../..
+
+rm -rf $PRGNAM-$VERSION
+
+mkdir -p $PRGNAM-$VERSION
+mkdir -p $PRGNAM-$VERSION/etc/portslackware
+mkdir -p $PRGNAM-$VERSION/usr/bin
+mkdir -p $PRGNAM-$VERSION/usr/share/portslackware
+mkdir -p $PRGNAM-$VERSION/usr/man/man1
+mkdir -p $PRGNAM-$VERSION/usr/man/pt_BR/man1
+mkdir -p $PRGNAM-$VERSION/install
+
+cp $SOURCE/portslackware $PRGNAM-$VERSION/usr/bin/
+cp $SOURCE/portslackware-dep $PRGNAM-$VERSION/usr/bin/
+cp $SOURCE/portslackware-install $PRGNAM-$VERSION/usr/bin/
+cp $SOURCE/portslackware-config $PRGNAM-$VERSION/etc/portslackware/
+cp $SOURCE/portscript.sh $PRGNAM-$VERSION/usr/share/portslackware/
+cp $SOURCE/slack-desc $PRGNAM-$VERSION/install
+
+
+gzip -c $SOURCE/manual > $PRGNAM-$VERSION/usr/man/man1/portslackware.1.gz
+gzip -c $SOURCE/manual-pt_br > $PRGNAM-$VERSION/usr/man/pt_BR/man1/portslackware.1.gz
+
+cd $PRGNAM-$VERSION
+chown -R root:root .
+find . \
+ \( -perm 777 -o -perm 775 -o -perm 711 -o -perm 555 -o -perm 511 \) \
+ -exec chmod 755 {} \; -o \
+ \( -perm 666 -o -perm 664 -o -perm 600 -o -perm 444 -o -perm 440 -o -perm 400 \) \
+ -exec chmod 644 {} \;
+
+chmod +x usr/bin/portslackware]
+chmod +x usr/bin/portslackware-dep
+chmod +x usr/bin/portslackware-install
+
+/sbin/makepkg -l y -c n $PRGNAM_PKG/$PRGNAM-$VERSION-noarch-1.txz 
+
+cd ..
+rm -rf ./$PRGNAM-$VERSION

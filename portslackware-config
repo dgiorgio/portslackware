@@ -1,0 +1,22 @@
+#!/bin/bash
+
+DIRPORTS=/usr/portslackware # Set here the default directory of the ports, avoid putting existing directory, preferably not change.
+PORTSDB=/var/portslackware-database
+
+SCRIPT_BEFORE_INSTALL=before_install.sh
+SCRIPT_AFTER_INSTALL=after_install.sh
+SCRIPT_BEFORE_REMOVE=before_remove.sh
+SCRIPT_AFTER_REMOVE=after_remove.sh
+
+SLACK_VERSION=$(cat /etc/slackware-version | awk '{print $2}' | cut -d"." -f1-2) # Enter here your version of slackware, this value must be the same slackbuilds.org
+
+PORTSCRIPT=portscript.sh
+PORTSCRIPT_DIR=/usr/share/portslackware
+
+LOG_DIR=/var/portslackware-logs
+LOG_PORTSCRIPT=portscript.log
+
+TGZ_TXZ=tgz # txz is subject to errors 
+
+FTP_SLACKBUILDS=ftp://slackbuilds.org/$SLACK_VERSION/SLACKBUILDS.TXT.gz
+RSYNC_SLACKBUILDS=rsync://slackbuilds.org/slackbuilds/$SLACK_VERSION/

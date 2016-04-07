@@ -1,0 +1,158 @@
+#!/bin/bash
+# -----------------------------------------------------------------------
+# - Feito por: Douglas Giorgio Fim					-
+# - E-mail: douglasfim@yahoo.com.br					-
+# - Programa: portslackware							-
+# - Versao: x.x								-
+# -									-
+# - Este script pode ser alterado e distribuido por qualquer pessoa,	-
+# - desde que este quadro se mantenha inalterado.			-
+# -									-
+# - Obs.:	Este script foi desenvolvido para criação de ports com 	-
+# - 		scripts do slackbuilds.org.		   		-
+# - 		Não me responsabilizo pelas alterações do usuário.	-
+# -----------------------------------------------------------------------
+#
+# I recommend only change the variables.
+
+PORTSLACKWARE_CONFIG=/etc/portslackware/portslackware-config
+source $PORTSLACKWARE_CONFIG
+
+# Creating DB
+CREATEDB() {
+  echo -n 'Creating the database... '
+  for CLASSE in `ls -l "$DIRPORTS" | grep "^d" | awk '{print $9}'` ; do 
+    mkdir -pv "$PORTSDB/$CLASSE"
+    cd "$PORTSDB/$CLASSE" 
+    for PRGNAM in `ls -l "$DIRPORTS/$CLASSE" | grep "^d" | awk '{print $9}'` ; do 
+      mkdir -p "$PORTSDB/$CLASSE/$PRGNAM"
+      touch "$PORTSDB/$CLASSE/$PRGNAM/$DEP"
+      touch "$PORTSDB/$CLASSE/$PRGNAM/$OPTIONAL_DEP"
+      touch "$PORTSDB/$CLASSE/$PRGNAM/$SCRIPT_BEFORE_INSTALL"
+      touch "$PORTSDB/$CLASSE/$PRGNAM/$SCRIPT_AFTER_INSTALL"
+      touch "$PORTSDB/$CLASSE/$PRGNAM/$SCRIPT_BEFORE_REMOVE"
+      touch "$PORTSDB/$CLASSE/$PRGNAM/$SCRIPT_AFTER_REMOVE"
+    done 
+  done
+  chmod +x $PORTSDB/*/*/*.sh
+  echo '[OK!]'
+}
+
+SCRIPT(){
+echo "#!/bin/bash
+
+for CLASSE in \$(ls -l $DIRPORTS | grep '^d' | awk '{print \$9}') ; do 
+  cd $DIRPORTS/\$CLASSE
+  for PRGNAM in \$(ls -l $DIRPORTS/\$CLASSE | grep '^d' | awk '{print \$9}') ; do 
+    cd $DIRPORTS/\$CLASSE/\$PRGNAM
+    \$*
+
+    #Add MAKEOPTS in front of all the commands make, the script *.SlackBuild. Run only once.
+    #sed -i \"s/\<make\>/make \$MAKEOPTS/g\" \$PRGNAM.SlackBuild 
+  done 
+done" > $DIRPORTS/MAKE
+chmod +x $DIRPORTS/MAKE
+
+# Removal and creation of scripts, we do not recommend change.
+rm -rf $DIRPORTS/*/*/$PORTSCRIPT
+echo 'Creating scripts... '
+for CLASSE in `ls -l "$DIRPORTS" | grep "^d" | awk '{print $9}'` ; do 
+  cd "$DIRPORTS/$CLASSE" 
+  for PRGNAM in `ls -l "$DIRPORTS/$CLASSE" | grep "^d" | awk '{print $9}'` ; do 
+    #echo "Creating script $DIRPORTS/$CLASSE/$PRGNAM/$PORTSCRIPT"
+    echo "#!/bin/bash
+
+source $PORTSLACKWARE_CONFIG
+
+CLASSE=$CLASSE
+PRGNAM=$PRGNAM
+TOTAL_DIR=$DIRPORTS/$CLASSE/$PRGNAM
+" > $DIRPORTS/$CLASSE/$PRGNAM/$PORTSCRIPT
+    cat $PORTSCRIPT_DIR/$PORTSCRIPT >> $DIRPORTS/$CLASSE/$PRGNAM/$PORTSCRIPT
+  done 
+done
+chmod +x $DIRPORTS/*/*/$PORTSCRIPT
+chmod +x $DIRPORTS/*/*/*.SlackBuild
+echo '[OK!]'
+exit 0
+}
+
+while getopts chfv:d:s: option
+do
+  case $option in
+    v)
+      SLACK_VERSION=$OPTARG
+    ;;
+    d)
+      mkdir $PORTSDB
+      tar -xjvf $OPTARG -C $PORTSDB
+      exit 1
+    ;;
+    f)
+      SCRIPT
+      exit 1
+    ;;
+    s)
+      sh $OPTARG
+      exit 1
+    ;;
+    c)
+      CREATEDB
+      exit 1
+    ;;
+    h)
+      man portslackware
+      exit 1
+    ;;
+    *)
+      echo 'parameter invalid'
+      exit 1
+    ;;
+  esac
+done
+
+mkdir -p "$LOG_DIR" || exit 1
+mkdir -p "$DIRPORTS" || exit 1
+cd "$DIRPORTS" || exit 1
+
+SLACKBUILD_WEB() {
+rm -rf $DIRPORTS/SLACKBUILDS.TXT.*
+wget $FTP_SLACKBUILDS || echo "Failure to try to download the file $FTP_SLACKBUILDS" || exit 1
+gunzip -f $DIRPORTS/SLACKBUILDS.TXT.gz
+
+ATUAL=`md5sum $DIRPORTS/SLACKBUILDS | awk '{print $1}' || echo nada`
+NOVO=`md5sum $DIRPORTS/SLACKBUILDS.TXT | awk '{print $1}'`
+
+if [ "$NOVO" == "$ATUAL" ] ; then
+  echo "Your version is the latest."
+  echo -n "Would you like to continue anyway? [y/N] " ; read -n1 ESCOLHA
+  echo ""
+  case $ESCOLHA in
+    n|N|"") exit 1 ;;
+    y|Y) echo "Wait..." ;;
+    *) echo "Invalid parameter!" ; exit 1 ;;
+  esac
+fi
+
+mv $DIRPORTS/SLACKBUILDS.TXT $DIRPORTS/SLACKBUILDS
+}
+SLACKBUILD_WEB # comment this line in case of development and testing.
+
+rsync -vaz $RSYNC_SLACKBUILDS $DIRPORTS/
+
+# This function is intended to create new functions to the script.
+#RECURS() {
+#  for CLASSE in `ls -l "$DIRPORTS" | grep "^d" | awk '{print $9}'` ; do 
+#    cd "$DIRPORTS/$CLASSE" 
+#    for PRGNAM in `ls -l "$DIRPORTS/$CLASSE" | grep "^d" | awk '{print $9}'` ; do 
+#      cd "$DIRPORTS/$CLASSE/$PRGNAM"
+#      $*
+#    done 
+#  done
+#}
+# Example of use:
+#
+# RECURS 'touch $PORTSCRIPT'
+# RECURS 'chmod +x $PORTSCRIPT'
+
+SCRIPT

@@ -1,0 +1,33 @@
+#!/bin/bash 
+
+source /etc/portslackware/portslackware-config
+DEPENDENCIES="$@"
+ERRO=""
+INSTALL=""
+INSTALL_VAR=""
+
+cd $DIRPORTS
+
+for i in $DEPENDENCIES ; do
+  VAR=$(find . -type d -iname $i)
+  [[ "$VAR" == "" ]] && ERRO="$ERRO [$i]"
+  VAR=$(echo $VAR | sed 's/\.\///g')
+  INSTALL_VAR="$INSTALL_VAR $VAR"
+done
+
+[[ "$ERRO" != "" ]] && echo "$ERRO não foram encontrados"
+
+for a in $INSTALL_VAR ; do
+  echo "Install $a [Y/n] " && read A
+  A="$(echo $A | awk '{print $1}')"
+  case $A in
+    Y|y|"")
+      INSTALL="$INSTALL $a"
+      ;;
+  esac
+done
+
+for i in $INSTALL; do
+  cd $DIRPORTS/$i
+  sh $PORTSCRIPT opt-dep-all
+done

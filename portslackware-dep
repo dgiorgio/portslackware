@@ -1,0 +1,21 @@
+#!/bin/bash 
+
+source /etc/portslackware/portslackware-config
+DEPENDENCIES=$@
+ERRO=""
+
+cd $DIRPORTS
+
+for i in $DEPENDENCIES ; do
+  VAR=$(find . -type d -iname $i)
+  if [ "$VAR" != "" ] ; then
+    VAR=$(echo $VAR | sed 's/\.\///g') ; echo $VAR
+    cat $PORTSDB/$VAR/$DEP
+    echo OPTIONAL
+    cat $PORTSDB/$VAR/$OPTIONAL_DEP
+  else
+    ERRO="$ERRO [$i]"
+    echo "$ERRO não foram encontrados"
+  fi
+done
+
