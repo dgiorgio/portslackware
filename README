@@ -1,3 +1,0 @@
-Run geratepkg and install pkg
-  # sh geratepkg <version>
-  # installpkg portslackware-<version>-noarch-1.txz
