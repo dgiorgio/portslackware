@@ -123,7 +123,7 @@ REMOVEPKG(){
 #}
 # New
 DEP_SOLUTION(){
-  for i in $REQUIRES) ; do
+  for i in $REQUIRES ; do
     if [ $i != "" ] ; then
       cd $DIRPORTS/*/$i
       ./$PORTSCRIPT $1 || ERROR
